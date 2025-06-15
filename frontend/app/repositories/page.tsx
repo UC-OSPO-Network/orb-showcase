@@ -1,35 +1,12 @@
-'use client'
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
+import { Suspense } from "react";
+import { RepositoriesPageClient } from "./RepositoriesPageClient";
 
-const queryClient = new QueryClient()
 
-export default function App() {
+export default function RepositoriesPage() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Example />
-    </QueryClientProvider>
-  )
+    <Suspense fallback={null}>
+      <RepositoriesPageClient />
+    </Suspense>
+  );
 }
 
-function Example() {
-  const { isPending, error, data } = useQuery({
-    queryKey: ['id'],
-    queryFn: () => fetch('http://localhost:8000/repositories').then((res) => res.json()),
-  })
-
-  if (isPending) return 'Loading...'
-
-  if (error) return 'An error has occurred: ' + error.message
-
-  console.log(data)
-
-  return (
-    <div>
-      <div>
-        {data.map((a) => (
-          <h1 key={a.id}>{a.name}</h1>
-        ))}
-      </div>
-    </div>
-  )
-}
