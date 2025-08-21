@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 
-export default function RepositoriesLayout({ children }: { children: React.ReactNode }) {
+export default function RepositoryLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen">
       <div className="container mb-0">

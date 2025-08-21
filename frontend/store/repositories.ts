@@ -1,7 +1,6 @@
 import { create } from "zustand";
 
 export interface Repository {
-  id: number;
   full_name: string;
   description?: string;
   university?: string;
@@ -16,6 +15,16 @@ export interface Repository {
   created_at?: string;
   contributors?: number;
   homepage?: string;
+  topic_area_ai?: string;
+  // Only these extra fields
+  funder1?: string;
+  grant_number1_1?: string;
+  grant_number1_2?: string;
+  grant_number1_3?: string;
+  funder2?: string;
+  grant_number2_1?: string;
+  grant_number2_2?: string;
+  grant_number2_3?: string;
 }
 
 interface RepositoriesState {
@@ -32,6 +41,8 @@ interface RepositoriesState {
   setLicensesSelected: (v: string[]) => void;
   ownersSelected: string[];
   setOwnersSelected: (v: string[]) => void;
+  topicsSelected: string[];
+  setTopicsSelected: (v: string[]) => void;
 }
 
 export const useRepositoriesStore = create<RepositoriesState>((set) => ({
@@ -48,4 +59,6 @@ export const useRepositoriesStore = create<RepositoriesState>((set) => ({
   setLicensesSelected: (v) => set({ licensesSelected: v }),
   ownersSelected: [],
   setOwnersSelected: (v) => set({ ownersSelected: v }),
+  topicsSelected: [],
+  setTopicsSelected: (v) => set({ topicsSelected: v }),
 }));
