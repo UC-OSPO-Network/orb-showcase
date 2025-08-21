@@ -5,6 +5,7 @@ from sqlmodel import Session, select, func
 from models import Repository, RepositoryResponse
 from fastapi import HTTPException
 from database import get_session
+import httpx
  
 app = FastAPI()
 
@@ -26,7 +27,7 @@ def get_languages(session: Session = Depends(get_session)):
     **Returns:**
         - `List[str]`: List of unique languages.
     """
-    result = session.exec(select(Repository.language).where(Repository.language.isnot(None)).distinct())
+    result = session.exec(select(Repository.language).where(Repository.language.isnot(None), Repository.approved == True).distinct())
     return sorted([lang for lang in result if lang])
 
 @app.get("/licenses", response_model=List[str])
@@ -38,7 +39,7 @@ def get_licenses(session: Session = Depends(get_session)):
     **Returns:**
         - `List[str]`: List of unique licenses.
     """
-    result = session.exec(select(Repository.license).where(Repository.license.isnot(None)).distinct())
+    result = session.exec(select(Repository.license).where(Repository.license.isnot(None), Repository.approved == True).distinct())
     return sorted([lic for lic in result if lic])
 
 @app.get("/universities", response_model=List[str])
@@ -50,8 +51,20 @@ def get_universities(session: Session = Depends(get_session)):
     **Returns:**
         - `List[str]`: List of unique universities.
     """
-    result = session.exec(select(Repository.university).where(Repository.university.isnot(None)).distinct())
+    result = session.exec(select(Repository.university).where(Repository.university.isnot(None), Repository.approved == True).distinct())
     return sorted([uni for uni in result if uni])
+
+@app.get("/topics", response_model=List[str])
+def get_topics(session: Session = Depends(get_session)):
+    """
+    ### Get Topics
+    Returns a sorted list of unique topic_area_ai values from the repositories.
+    
+    **Returns:**
+        - `List[str]`: List of unique topic_area_ai values.
+    """
+    result = session.exec(select(Repository.topic_area_ai).where(Repository.topic_area_ai.isnot(None), Repository.approved == True).distinct())
+    return sorted([topic for topic in result if topic])
 
 @app.get("/repositories", response_model=List[RepositoryResponse])
 def list_repositories(
@@ -62,6 +75,7 @@ def list_repositories(
     owner: List[str] = Query(None, description="Organization/Owner filter"),
     readme: List[str] = Query(None, description="Readme"),
     default_branch: List[str] = Query(None, description="Default branch"),
+    topic_area_ai: List[str] = Query(None, description="Topic Area AI filter"),
     sort: str = Query("stargazers_count", description="Sort by field: stargazers_count, forks_count, created_at"),
     order: str = Query("desc", description="Sort order: asc or desc"),
     limit: int = Query(None, ge=1, le=100, description="Number of results to return"),
@@ -89,10 +103,7 @@ def list_repositories(
 
     - `List[RepositoryResponse]`: List of repositories matching the filters.
     """
-    statement = select(
-        Repository,
-        func.coalesce(func.jsonb_array_length(Repository.contributors), 0).label('contributors_count')
-    )
+    statement = select(Repository).where(Repository.approved == True)
     sort_map = {
         "stargazers_count": Repository.stargazers_count,
         "forks_count": Repository.forks_count,
@@ -120,6 +131,8 @@ def list_repositories(
         statement = statement.where(Repository.readme.in_(readme))
     if default_branch:
         statement = statement.where(Repository.default_branch.in_(default_branch))
+    if topic_area_ai:
+        statement = statement.where(Repository.topic_area_ai.in_(topic_area_ai))
     if limit:
         statement = statement.limit(limit)
     if offset:
@@ -127,17 +140,28 @@ def list_repositories(
     res = session.exec(statement)
     results = res.all()
     response = []
-    for repo, contributors_count in results:
+    for repo in results:
         repo_dict = repo.dict()
+
+        
+        # Overwrite description with short_description
+        repo_dict["description"] = repo_dict.get("short_description")
+        repo_dict.pop("short_description", None)
+        # Convert datetime fields to ISO string for Pydantic
+        for dt_field in ["created_at", "updated_at", "pushed_at"]:
+            if dt_field in repo_dict and hasattr(repo_dict[dt_field], "isoformat"):
+                repo_dict[dt_field] = repo_dict[dt_field].isoformat()
+
         repo_dict['contributors'] = contributors_count
+
         response.append(RepositoryResponse(**repo_dict))
     return response
 
 @app.get("/repositories/{id}", response_model=RepositoryResponse)
-def get_repository(id: int, session: Session = Depends(get_session)):
+def get_repository(id: str, session: Session = Depends(get_session)):
     """
     ### Get Repository by ID
-    Retrieves a repository by its unique ID, including contributor count.
+    Retrieves a repository by its unique ID.
     
     **Parameters:**
         - `id` (int): The unique identifier of the repository.
@@ -148,17 +172,26 @@ def get_repository(id: int, session: Session = Depends(get_session)):
     **Raises:**
         - `HTTPException 404`: If the repository is not found.
     """
-    statement = select(
-        Repository,
-        func.coalesce(func.jsonb_array_length(Repository.contributors), 0).label('contributors_count')
-    ).where(Repository.id == id)  # uses func from sqlmodel
+    id = str(id)
+    statement = select(Repository).where(Repository.id == id, Repository.approved == True)
     res = session.exec(statement)
-    row = res.first()
-    if not row:
+    repo = res.first()
+    if not repo:
         raise HTTPException(status_code=404, detail="Repository not found")
-    repo, contributors_count = row
     repo_dict = repo.dict()
+
+
+    # Overwrite description with short_description
+    repo_dict["description"] = repo_dict.get("short_description")
+    repo_dict.pop("short_description", None)
+    # Convert datetime fields to ISO string for Pydantic
+    for dt_field in ["created_at", "updated_at", "pushed_at"]:
+        if dt_field in repo_dict and hasattr(repo_dict[dt_field], "isoformat"):
+            repo_dict[dt_field] = repo_dict[dt_field].isoformat()
+
     repo_dict['contributors'] = contributors_count
+
+
     return RepositoryResponse(**repo_dict)
 
 
@@ -175,27 +208,9 @@ def get_organizations(session: Session = Depends(get_session)):
         select(Repository.owner)
         .where(Repository.owner.isnot(None))
         .where(Repository.organization == '1')
+        .where(Repository.approved == True)
         .distinct()
     )
     return sorted([owner for owner in result if owner])
 
 
-@app.get("/repositories/{id}/contributors", response_model=List[str])
-def get_contributors(id: int, session: Session = Depends(get_session)):
-    """
-    ### Get Contributors
-    Retrieves a list of unique contributors for a specific repository.
-    
-    **Parameters:**
-        - `id` (int): The unique identifier of the repository.
-
-    **Returns:**
-        - `List[str]`: List of unique contributors.
-    """
-    statement = select(Repository.contributors).where(Repository.id == id)
-    res = session.exec(statement)
-    contributors = res.first()
-    if contributors is None:
-        raise HTTPException(status_code=404, detail="Repository not found")
-    return [contributor for contributor in contributors if contributor]
-    
