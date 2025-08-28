@@ -13,8 +13,34 @@ import fuzzysort from "fuzzysort";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+type Repository = {
+  id: number;
+  full_name: string;
+  description?: string;
+  language?: string;
+  license?: string;
+  owner?: string;
+  contributors?: number;
+  created_at?: string;
+  updated_at?: string;
+  pushed_at?: string;
+  readme?: string;
+  default_branch?: string;
+  topic_area_ai?: string;
+  university?: string;
+  funder1?: string;
+  grant_number1_1?: string;
+  grant_number1_2?: string;
+  grant_number1_3?: string;
+  funder2?: string;
+  grant_number2_1?: string;
+  grant_number2_2?: string;
+  grant_number2_3?: string;
+  // add other fields as needed
+};
+
 export function RepositoriesPageClient() {
-  const repositories = useRepositoriesStore((state) => state.repositories);
+  const repositories: Repository[] = useRepositoriesStore((state) => state.repositories);
   const setRepositories = useRepositoriesStore((state) => state.setRepositories);
   // Use zustand for filters
   const searchTerm = useRepositoriesStore((state) => state.searchTerm);
@@ -27,6 +53,8 @@ export function RepositoriesPageClient() {
   const setLicensesSelected = useRepositoriesStore((state) => state.setLicensesSelected);
   const ownersSelected = useRepositoriesStore((state) => state.ownersSelected);
   const setOwnersSelected = useRepositoriesStore((state) => state.setOwnersSelected);
+  const topicsSelected = useRepositoriesStore((state) => state.topicsSelected);
+  const setTopicsSelected = useRepositoriesStore((state) => state.setTopicsSelected);
   const searchParams = useSearchParams();
 
   // Fetch filter options
@@ -46,6 +74,11 @@ export function RepositoriesPageClient() {
     queryKey: ["organizations"],
     queryFn: () => fetch(`${API_URL}/organizations`).then(res => res.json()),
   });
+  const { data: topics = [] } = useQuery({
+    queryKey: ["topics"],
+    queryFn: () => fetch(`${API_URL}/topics`).then(res => res.json()),
+  });
+  
 
   // Fetch all repositories once on mount
   const [isLoading, setIsLoading] = useState(false);
@@ -84,6 +117,7 @@ export function RepositoriesPageClient() {
     if (languagesSelected.length > 0) result = result.filter(r => r.language && languagesSelected.includes(r.language));
     if (licensesSelected.length > 0) result = result.filter(r => r.license && licensesSelected.includes(r.license));
     if (ownersSelected.length > 0) result = result.filter(r => r.owner && ownersSelected.includes(r.owner));
+    if (topicsSelected.length > 0) result = result.filter(r => r.topic_area_ai && topicsSelected.includes(r.topic_area_ai));
     if (searchTerm.trim()) {
       const fuzzy = fuzzysort.go(
         searchTerm,
@@ -93,7 +127,7 @@ export function RepositoriesPageClient() {
       result = fuzzy.map(r => r.obj);
     }
     return result;
-  }, [repositories, universitiesSelected, languagesSelected, licensesSelected, ownersSelected, searchTerm]);
+  }, [repositories, universitiesSelected, languagesSelected, licensesSelected, ownersSelected, topicsSelected, searchTerm]);
 
   // Pagination state
   const [page, setPage] = React.useState(1);
@@ -114,6 +148,7 @@ export function RepositoriesPageClient() {
     setLanguagesSelected([]);
     setLicensesSelected([]);
     setOwnersSelected([]);
+    setTopicsSelected([]);
     setPage(1);
   };
 
@@ -122,20 +157,22 @@ export function RepositoriesPageClient() {
       <main className="flex-1 py-10">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-            <h1 className="text-3xl font-bold text-sky-800">Browse Repositories</h1>
-            <div className="flex items-center gap-2 ml-auto">
-              <span className="text-gray-600 text-sm">Show</span>
-              <select
-                className="w-[70px] h-8 text-sm border-gray-300 rounded-md border focus:outline-none focus:ring-amber-400a text-center"
-                value={pageSize}
-                onChange={e => setPageSize(Number(e.target.value))}
-              >
-                {[10, 20, 30, 40].map(n => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-              <span className="text-gray-600 text-sm">per page</span>
-              <span className="ml-4 text-gray-500 text-xs">{totalItems} repositories</span>
+            <h1 className="text-3xl font-bold text-sky-800 flex-1 truncate">Browse Repositories</h1>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+         
+              <div className="flex items-center gap-2 md:ml-auto md:order-2 order-1">
+                <span className="text-gray-600 text-sm">Show</span>
+                <select
+                  className="w-[70px] h-8 text-sm border-gray-300 rounded-md border focus:outline-none focus:ring-amber-400a text-center"
+                  value={pageSize}
+                  onChange={e => setPageSize(Number(e.target.value))}
+                >
+                  {[10, 20, 30, 40].map(n => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+                <span className="text-gray-600 text-sm">per page</span>
+              </div>
             </div>
           </div>
           <div className="grid gap-6 md:grid-cols-[250px_1fr] w-full">
@@ -155,6 +192,9 @@ export function RepositoriesPageClient() {
                 languages={languages}
                 licenses={licenses}
                 organizations={organizations}
+                topics={topics}
+                topicsSelected={topicsSelected}
+                setTopicsSelected={setTopicsSelected}
                 onApplyFilters={handleApplyFilters}
                 onResetFilters={handleResetFilters}
               />
@@ -167,7 +207,12 @@ export function RepositoriesPageClient() {
               ) : pagedRepositories.length === 0 ? (
                 <RepositoryEmptyState />
               ) : (
-                <RepositoryGrid repositories={pagedRepositories} />
+                <>
+                  <span className="font-bold text-sky-800 text-sm block mb-2">
+                    Showing {pagedRepositories.length} of {totalItems} projects
+                  </span>
+                  <RepositoryGrid repositories={pagedRepositories} />
+                </>
               )}
               <RepositoryPagination
                 page={page}

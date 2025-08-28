@@ -1,15 +1,15 @@
 // Centralized university code-to-name mapping for UI display
 export const UNIVERSITY_DISPLAY_NAMES: Record<string, string> = {
-  ucb: "UC Berkeley",
-  ucla: "UC Los Angeles",
-  ucsd: "UC San Diego",
-  ucsf: "UC San Francisco",
-  ucd: "UC Davis",
-  uci: "UC Irvine",
-  ucr: "UC Riverside",
-  ucsb: "UC Santa Barbara",
-  ucsc: "UC Santa Cruz",
-  ucm: "UC Merced",
+  UCB: "UC Berkeley",
+  UCLA: "UC Los Angeles",
+  UCSD: "UC San Diego",
+  UCSF: "UC San Francisco",
+  UCD: "UC Davis",
+  UCI: "UC Irvine",
+  UCR: "UC Riverside",
+  UCSB: "UC Santa Barbara",
+  UCSC: "UC Santa Cruz",
+  UCM: "UC Merced",
 };
 
 export function getUniversityDisplayName(code?: string): string {

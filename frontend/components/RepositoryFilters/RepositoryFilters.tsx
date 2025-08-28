@@ -19,6 +19,9 @@ interface RepositoryFiltersProps {
   languages: string[];
   licenses: string[];
   organizations: string[];
+  topics: string[];
+  topicsSelected: string[];
+  setTopicsSelected: (v: string[]) => void;
   onApplyFilters: () => void;
   onResetFilters: () => void;
 }
@@ -33,6 +36,9 @@ export const RepositoryFilters: React.FC<RepositoryFiltersProps> = ({
   languages = [],
   licenses = [],
   organizations = [],
+  topics = [],
+  topicsSelected = [],
+  setTopicsSelected = () => {},
   onApplyFilters,
   onResetFilters,
 }) => (
@@ -78,10 +84,15 @@ export const RepositoryFilters: React.FC<RepositoryFiltersProps> = ({
       label="Development Teams"
       allLabel="All Development Teams"
     />
-    <Button className="w-full" onClick={onApplyFilters}>
-      Apply Filters
-    </Button>
-    <Button className="w-full" variant="outline" onClick={onResetFilters}>
+    <MultiSelectCombobox
+      options={topics}
+      selected={topicsSelected}
+      setSelected={setTopicsSelected}
+      placeholder="All Topics"
+      label="Topics"
+      allLabel="All Topics"
+    />
+    <Button className="w-full" onClick={onResetFilters}>
       Reset Filters
     </Button>
   </div>

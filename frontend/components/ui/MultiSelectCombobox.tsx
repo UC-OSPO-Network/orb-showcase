@@ -32,14 +32,14 @@ export function MultiSelectCombobox({ options, selected, setSelected, placeholde
           <Button
             variant="outline"
             role="combobox"
-            className="w-full flex flex-row flex-wrap items-center justify-between text-left min-h-10 px-3 h-auto"
-            style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}
+            className="w-full flex flex-wrap items-start justify-between text-left min-h-10 px-3 h-auto min-w-0 overflow-hidden"
+            style={{ whiteSpace: 'normal' }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             onFocus={() => setHovered(true)}
             onBlur={() => setHovered(false)}
           >
-            <span className="flex flex-wrap gap-2 items-center flex-1 min-h-6">
+            <span className="flex flex-wrap gap-2 items-center flex-1 min-h-6 min-w-0 break-words w-full">
               {selected.length === 0 ? (
                 <span className="text-muted-foreground">{allLabel || placeholder || "Select..."}</span>
               ) : (
@@ -47,11 +47,12 @@ export function MultiSelectCombobox({ options, selected, setSelected, placeholde
                   <span
                     key={v}
                     className={
-                      `inline-flex items-center rounded px-2 py-1 text-sm font-medium border transition-colors ` +
+                      `inline-flex items-center rounded px-2 py-1 text-sm font-medium border transition-colors break-words min-w-0 max-w-full w-full` +
                       (open || hovered
-                        ? "bg-primary/10 border-primary text-primary"
-                        : "bg-gray-100 border-gray-200 text-foreground")
+                        ? " bg-primary/10 border-primary text-primary"
+                        : " bg-gray-100 border-gray-200 text-foreground")
                     }
+                    style={{ wordBreak: 'break-word', minWidth: 0, maxWidth: '100%' }}
                   >
                     <span
                       role="button"
@@ -71,7 +72,12 @@ export function MultiSelectCombobox({ options, selected, setSelected, placeholde
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] max-w-full p-0 sm:w-full sm:max-w-xs md:w-full md:max-w-sm lg:max-w-md" align="start" sideOffset={4} style={{ minWidth: 0 }}>
+        <PopoverContent
+          className="w-64 max-w-xs p-0"
+          align="start"
+          sideOffset={4}
+          style={{ minWidth: 0, wordBreak: 'break-word' }}
+        >
           <Command>
             <CommandInput placeholder={placeholder || allLabel || "Search..."} />
             <CommandList className="max-h-60 overflow-y-auto">
@@ -94,6 +100,7 @@ export function MultiSelectCombobox({ options, selected, setSelected, placeholde
                         : [...selected, option]
                     );
                   }}
+                  className="break-words whitespace-normal"
                 >
                   <Check
                     className={
