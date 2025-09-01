@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {Eye, ArrowLeft, Star, GitFork, Download, ExternalLink, Users, Calendar, Code, User, University, School, FileText } from "lucide-react";
+import {Eye, ArrowLeft, Star, GitFork, Download, ExternalLink, Users, Calendar, Code, User, University, School, FileText, Mail } from "lucide-react";
 import Link from "next/link";
 import { ContributorsScrollArea } from "@/components/ContributorsScrollArea";
 
@@ -33,6 +33,12 @@ export interface Repository {
   readme?: string;
   default_branch?: string;
   topic_area_ai?: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_name2?: string;
+  contact_email2?: string;
+  contact_name3?: string;
+  contact_email3?: string;
   funder1?: string;
   grant_number1_1?: string;
   grant_number1_2?: string;
@@ -96,40 +102,7 @@ function fixImageUrls(markdown: string, repoOwner: string, repoName: string, bra
     /https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/([^\")\s]+)/g,
     'https://raw.githubusercontent.com/$1/$2/$3/$4'
   );
-
-  result = fixRepoResourceUrls(result, repoOwner, repoName, safeBranch)
-  
   return result;
-}
-
-function fixRepoResourceUrls(markdown: string, repoOwner: string, repoName: string, branch?: string ) {
-  const safeBranch = branch || "main";
-  // Fix repository resources URLs
-  let result = markdown.replace(/\]\(((?!http)\S+[^\)])\)/gi, (match, raw_resource) => {
-    const resource = getFormattedRepoResource(raw_resource);
-    const url = `https://github.com/${repoOwner}/${repoName}/tree/${safeBranch}/${resource}`;
-    return `](${url})`;
-  });
-
-  // Fixing link definitions that point to repository resources URLs
-  result = result.replace(/(\[\S*\]\:)\s*([^\s&^http&^mailto]\S*)/gi, (_, variable, raw_resource) => {
-    const resource = getFormattedRepoResource(raw_resource);
-    const url = `https://github.com/${repoOwner}/${repoName}/tree/${safeBranch}`
-    return `${variable} ${url}/${resource}`;
-  });
-
-  return result;
-}
-
-function getFormattedRepoResource(raw_resource: string) {
-  const leading_chars = raw_resource.substring(0,2);
-  let potential_resource = raw_resource;
-  if (leading_chars === "./") {   
-    potential_resource = raw_resource.substring(2);
-  } else if (leading_chars[0] === "/") {
-    potential_resource = raw_resource.substring(1);
-  }
-  return potential_resource;
 }
 
 function ReadmeViewer({ source, repoOwner, repoName, branch }: ReadmeViewerProps) {
@@ -266,7 +239,6 @@ function LicenseViewer({ repoOwner, repoName, branch }: LicenseViewerProps) {
   );
 }
 
-
 function useOrgInfo(org: string | undefined) {
   const [orgInfo, setOrgInfo] = useState<{ blog?: string; html_url?: string } | null>(null);
   useEffect(() => {
@@ -287,6 +259,22 @@ export const RepositoryPage: React.FC<Props> = ({ repo, contributors}) => {
 
   // Determine if license tab should be shown
   const showLicenseTab = repo.license && repo.license !== "Other";
+
+  // Helper function to get primary contact with fallback logic
+  const getPrimaryContact = () => {
+    if (repo.contact_name && repo.contact_email) {
+      return { name: repo.contact_name, email: repo.contact_email };
+    }
+    if (repo.contact_name2 && repo.contact_email2) {
+      return { name: repo.contact_name2, email: repo.contact_email2 };
+    }
+    if (repo.contact_name3 && repo.contact_email3) {
+      return { name: repo.contact_name3, email: repo.contact_email3 };
+    }
+    return null;
+  };
+
+  const primaryContact = getPrimaryContact();
 
   return (
     <div className="flex flex-col">
@@ -400,7 +388,6 @@ export const RepositoryPage: React.FC<Props> = ({ repo, contributors}) => {
                 </CardHeader>
                 <CardContent className="space-y-4">
 
-
                 <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-gray-500" />
                         <span className="font-medium">Development Team:</span>
@@ -418,55 +405,6 @@ export const RepositoryPage: React.FC<Props> = ({ repo, contributors}) => {
                       </div>
                   
                       {repo.language && (
-
-                    <div className="flex gap-4 mb-4">
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <Star className="w-4 h-4" />
-                    <span>{repo.stargazers_count} stars</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <GitFork className="w-4 h-4" />
-                    <span>{repo.forks_count} forks</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <Eye className="w-4 h-4" />
-                    <span>{repo.subscribers_count} views</span>
-                  </div>
-                </div>
-
-              </div>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sky-700">Description</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p>{repo.description}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sky-700">README</CardTitle>
-                </CardHeader>
-                <div className="max-w-4xl w-full overflow-x-auto">
-                  <ReadmeViewer source={repo.readme} repoOwner={repo.owner || ""} repoName={repo.full_name?.split("/").pop() || ""} branch={branch} />
-                </div>
-              </Card>
-            </div>
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sky-700">Repository Info</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {repo.owner && (
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm">{repo.owner}</span>
-                    </div>
-                  )}
-                  
-                  {repo.created_at && (
-
                     <div className="flex items-center gap-2">
                       <Code className="w-4 h-4 text-gray-500" />
                       <span className="font-medium">Language:</span>
@@ -490,6 +428,17 @@ export const RepositoryPage: React.FC<Props> = ({ repo, contributors}) => {
                       <a href={repo.homepage} target="_blank" rel="noopener noreferrer" className="text-sky-600"><span className="text-sm">{repo.homepage}</span></a>
                     </div>
                   )}
+
+                  {primaryContact && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium">Contact:</span>
+                      <a href={`mailto:${primaryContact.email}`} className="text-sky-600">
+                        <span className="text-sm">{primaryContact.name} ({primaryContact.email})</span>
+                      </a>
+                    </div>
+                  )}
+
                   {repo.html_url && (
                     <div className="pt-4">
                       <Link href={repo.html_url} target="_blank" rel="noopener noreferrer">
