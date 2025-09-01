@@ -7,4 +7,23 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./backend/.env:/app/.env
+    networks:
+      - local-dev-net
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - /app/node_modules
+      - ./frontend:/app
+      - ./frontend/.env:/app/.env
+    networks:
+      - local-dev-net
+
+networks:
+  local-dev-net:
+    external: true
   

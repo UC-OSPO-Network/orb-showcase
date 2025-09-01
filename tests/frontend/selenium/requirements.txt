@@ -1,0 +1,5 @@
+pytest
+requests
+psycopg[binary]
+python-dotenv
+selenium==4.34.2

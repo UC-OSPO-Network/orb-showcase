@@ -10,42 +10,72 @@ The University of California Open Source Repository Browser Showcase (UC ORB Sho
 git clone https://github.com/UC-OSPO-Network/orb-showcase
 ```
 
-## Run Backend
+## Running the Application (Docker Compose)
 
-```bash
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
+1. **Create Environment Files**
 
+   - **Backend:**
+     - Create a file at `backend/.env` with:
+       ```
+       POSTGRES_DB_URL=postgresql://postgres:orb@orb-db:5432/sample
+       ```
+   - **Frontend:**
+     - Create a file at `frontend/.env` with (example):
+       ```
+       NEXT_PUBLIC_API_URL=http://localhost:8000
+       ```
+    
+2. **Database Setup**
 
-### Running the Database Locally
+   Create `local-dev-network` if it doesn't exist:
 
-Start PostgreSQL Container
+   ```bash
+   docker network create local-dev-net
+   ```
 
+   Start the database container:
+   
+   ```bash
+   docker run -d \
+     --name orb-db \
+     --network local-dev-net \
+     -e POSTGRES_USER=postgres \
+     -e POSTGRES_PASSWORD=orb \
+     -e POSTGRES_DB=sample \
+     -p 5432:5432 \
+     postgres:15
+   ```
 
+   Load schema and dummy data:
+   ```bash
+   cat db/sample.sql | docker exec -i orb-db psql -U postgres -d sample
+   ```
 
-```bash
-docker run -d \
-  --name orb-db \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=orb \
-  -e POSTGRES_DB=sample \
-  -p 5432:5432 \
-  postgres:15
-````
+3. **Start All Services**
 
-Load Schema and Dummy Data
+   From the project root, run:
+   ```bash
+   docker-compose up --build 
+   ```
+   This will start the backend, frontend, and connect to your running Postgres database (all on the `local-dev-net` Docker network).
 
-```bash
-cat db/sample.sql | docker exec -i orb-db psql -U postgres -d sample
-```
+   **Tip:** For subsequent runs (when no code or dependency changes are made), you can use:
+   ```bash
+   docker-compose up
+   ```
+   for faster startup.
 
-Make sure `backend/.env` has the connection string
+4. **Accessing the App**
+   - **Frontend:** http://localhost:3000
+   - **Backend API:** http://localhost:8000
 
-```bash
-POSTGRES_DB_URL=postgresql://postgres:orb@localhost:5432/sample
-```
+---
+
+## Notes
+- Both backend and frontend require their own `.env` files for configuration. These are mounted into the containers automatically by Docker Compose.
+- The backend must use `orb-db` as the database host when running in Docker Compose (not `localhost`).
+- For local (non-Docker) development, you may use `localhost` as the database host.
+
+---
+
 
