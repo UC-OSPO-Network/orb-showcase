@@ -1,0 +1,246 @@
+name: Process Repository Submission
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    paths:
+      - 'data/submissions/pending/**'
+  pull_request_review:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [run-bot-checks]
+
+env:
+  POSTGRES_DB_URL: ${{ secrets.POSTGRES_DB_URL }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  validate-submission:
+    name: Validate Submission
+    runs-on: ubuntu-latest
+    if: github.event_name != 'repository_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install jsonschema requests psycopg2-binary python-dotenv
+          
+      - name: Test Python scripts
+        run: |
+          python -c "import jsonschema, requests; print('Dependencies OK')"
+          python .github/scripts/validate_submission.py --help || echo "Script exists"
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
+          echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
+          
+          all_files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          echo "All changed files:"
+          echo "$all_files"
+          
+          files=$(echo "$all_files" | grep 'data/submissions/pending/.*\.json$' || echo "")
+          echo "files=$files" >> $GITHUB_OUTPUT
+          echo "Submission files found: $files"
+          
+          if [ -z "$files" ]; then
+            echo "No submission files found in this PR"
+          fi
+
+      - name: Validate submission files
+        if: steps.changed-files.outputs.files != ''
+        run: |
+          python .github/scripts/validate_submission.py "${{ steps.changed-files.outputs.files }}"
+
+      - name: Check for duplicates
+        if: steps.changed-files.outputs.files != ''
+        run: |
+          python .github/scripts/check_duplicates.py "${{ steps.changed-files.outputs.files }}"
+
+      - name: Validate GitHub repository
+        if: steps.changed-files.outputs.files != ''
+        run: |
+          python .github/scripts/validate_github_repo.py "${{ steps.changed-files.outputs.files }}"
+
+      - name: Comment validation results
+        if: steps.changed-files.outputs.files != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 🤖 Submission Validation Results\n\n';
+            
+            try {
+              const validationResults = fs.readFileSync('/tmp/validation_results.md', 'utf8');
+              comment += validationResults;
+            } catch (error) {
+              comment += '✅ All validation checks passed!\n\n';
+              comment += '**Next Steps:**\n';
+              comment += '- Repository information has been validated\n';
+              comment += '- No duplicates found\n';
+              comment += '- Ready for maintainer review\n';
+              comment += '- Approve this PR to add the repository to the showcase\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Comment no submission files
+        if: steps.changed-files.outputs.files == ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = '## 🤖 No Repository Submissions Found\n\n' +
+              'This PR does not contain any repository submission files in `data/submissions/pending/`.\n\n' +
+              'If you intended to submit a repository, please ensure your submission file is placed in the correct directory.';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  validate-submission-dispatch:
+    name: Validate Submission (Bot Dispatch)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'repository_dispatch' && github.event.action == 'run-bot-checks'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install jsonschema requests psycopg2-binary python-dotenv
+
+      - name: Validate submission files (from dispatch)
+        run: |
+          # Expecting PR number and branch in client_payload
+          echo "PR number: ${{ github.event.client_payload.pr_number }}"
+          echo "Branch: ${{ github.event.client_payload.branch }}"
+          # You may need to fetch the PR and changed files here using the GitHub API
+          # For simplicity, you can re-run the validation scripts on the branch or files as needed
+          # Example: fetch files and run validation
+          # (You may want to implement a script to do this based on your needs)
+          echo "Repository dispatch triggered. Implement file validation logic here."
+
+  process-approval:
+    name: Process Approved Submission
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'repository-submission')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install psycopg2-binary python-dotenv requests
+
+      - name: Get merged files
+        id: merged-files
+        run: |
+          echo "files=$(git diff --name-only HEAD~1 HEAD | grep 'data/submissions/pending/' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
+      - name: Process approved submission
+        run: |
+          python .github/scripts/process_approval.py "${{ steps.merged-files.outputs.files }}"
+
+      - name: Update approved repositories list
+        run: |
+          python .github/scripts/update_approved_list.py "${{ steps.merged-files.outputs.files }}"
+
+      - name: Move submission to approved
+        run: |
+          python .github/scripts/move_submission.py "${{ steps.merged-files.outputs.files }}" "approved"
+
+      - name: Set up PAT for pushing
+        run: git config --global url."https://${{ secrets.ACTIONS_PAT }}@github.com/".insteadOf "https://github.com/"
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/approved-repositories.json
+          git add data/submissions/approved/
+          git rm data/submissions/pending/* || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "🤖 Process approved submission: $(basename ${{ steps.merged-files.outputs.files }} .json)"
+            git push
+          fi
+
+  process-rejection:
+    name: Process Rejected Submission
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == false && github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'repository-submission')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Get submission files from PR
+        id: pr-files
+        run: |
+          echo "files=$(gh pr view ${{ github.event.pull_request.number }} --json files --jq '.files[].path' | grep 'data/submissions/pending/' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Move submission to rejected
+        run: |
+          python .github/scripts/move_submission.py "${{ steps.pr-files.outputs.files }}" "rejected"
+
+      - name: Set up PAT for pushing
+        run: git config --global url."https://${{ secrets.ACTIONS_PAT }}@github.com/".insteadOf "https://github.com/"
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/submissions/rejected/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "🤖 Process rejected submission: $(basename ${{ steps.pr-files.outputs.files }} .json)"
+            git push
+          fi

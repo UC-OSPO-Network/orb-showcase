@@ -1,0 +1,35 @@
+name: Debug Submission Workflow
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+  workflow_dispatch:
+
+jobs:
+  debug:
+    name: Debug Workflow
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Debug Info
+        run: |
+          echo "Workflow triggered!"
+          echo "Event: ${{ github.event_name }}"
+          echo "Action: ${{ github.event.action }}"
+          echo "PR Number: ${{ github.event.pull_request.number }}"
+          echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
+          echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
+          
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changed files
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Checking changed files in PR..."
+            git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
+          else
+            echo "Not a pull request event"
+          fi

@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import Providers from "./Providers"
 import Navbar from "@/components/Navbar"
 import Footer from "@/components/Footer"
+import { Toaster } from "sonner"
 
 
 const inter = Inter({ subsets: ["latin"] })
@@ -22,6 +23,7 @@ export default function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
             <Navbar />
             {children}
+            <Toaster position="top-right" />
           </ThemeProvider>
         </Providers>
 
