@@ -203,4 +203,3 @@ def get_organizations(session: Session = Depends(get_session)):
     )
     return sorted([owner for owner in result if owner])
 
-

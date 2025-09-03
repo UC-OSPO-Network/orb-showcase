@@ -102,40 +102,7 @@ function fixImageUrls(markdown: string, repoOwner: string, repoName: string, bra
     /https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/([^\")\s]+)/g,
     'https://raw.githubusercontent.com/$1/$2/$3/$4'
   );
-
-  result = fixRepoResourceUrls(result, repoOwner, repoName, safeBranch)
-  
   return result;
-}
-
-function fixRepoResourceUrls(markdown: string, repoOwner: string, repoName: string, branch?: string ) {
-  const safeBranch = branch || "main";
-  // Fix repository resources URLs
-  let result = markdown.replace(/\]\(((?!http)\S+[^\)])\)/gi, (match, raw_resource) => {
-    const resource = getFormattedRepoResource(raw_resource);
-    const url = `https://github.com/${repoOwner}/${repoName}/tree/${safeBranch}/${resource}`;
-    return `](${url})`;
-  });
-
-  // Fixing link definitions that point to repository resources URLs
-  result = result.replace(/(\[\S*\]\:)\s*([^\s&^http&^mailto]\S*)/gi, (_, variable, raw_resource) => {
-    const resource = getFormattedRepoResource(raw_resource);
-    const url = `https://github.com/${repoOwner}/${repoName}/tree/${safeBranch}`
-    return `${variable} ${url}/${resource}`;
-  });
-
-  return result;
-}
-
-function getFormattedRepoResource(raw_resource: string) {
-  const leading_chars = raw_resource.substring(0,2);
-  let potential_resource = raw_resource;
-  if (leading_chars === "./") {   
-    potential_resource = raw_resource.substring(2);
-  } else if (leading_chars[0] === "/") {
-    potential_resource = raw_resource.substring(1);
-  }
-  return potential_resource;
 }
 
 function ReadmeViewer({ source, repoOwner, repoName, branch }: ReadmeViewerProps) {
@@ -168,6 +135,109 @@ function ReadmeViewer({ source, repoOwner, repoName, branch }: ReadmeViewerProps
   );
 }
 
+interface LicenseViewerProps {
+  repoOwner: string;
+  repoName: string;
+  branch?: string;
+}
+
+function LicenseViewer({ repoOwner, repoName, branch }: LicenseViewerProps) {
+  const [licenseContent, setLicenseContent] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLicense = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // First, get the license info from GitHub API
+        const licenseUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/license`;
+        const licenseResponse = await fetch(licenseUrl);
+        
+        if (!licenseResponse.ok) {
+          throw new Error('License not found');
+        }
+        
+        const licenseData = await licenseResponse.json();
+        
+        if (!licenseData.download_url) {
+          throw new Error('License download URL not available');
+        }
+        
+        // Fetch the actual license content
+        const contentResponse = await fetch(licenseData.download_url);
+        
+        if (!contentResponse.ok) {
+          throw new Error('Failed to fetch license content');
+        }
+        
+        const content = await contentResponse.text();
+        setLicenseContent(content);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load license');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (repoOwner && repoName) {
+      fetchLicense();
+    }
+  }, [repoOwner, repoName, branch]);
+
+  if (isLoading) {
+    return (
+      <div className="p-4">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-5/6 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-gray-500">
+        <div className="flex items-center gap-2 mb-2">
+          {/* <FileText className="w-5 h-5" /> */}
+          {/* <span className="font-medium">License</span> */}
+        </div>
+        <p>Unable to load license: {error}</p>
+      </div>
+    );
+  }
+
+  if (!licenseContent) {
+    return (
+      <div className="p-4 text-gray-500">
+        <div className="flex items-center gap-2 mb-2">
+          {/* <FileText className="w-5 h-5" /> */}
+          {/* <span className="font-medium">License</span> */}
+        </div>
+        <p>No license content available.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4">
+      <div className="flex items-center gap-2 mb-4">
+        {/* <FileText className="w-5 h-5 text-sky-600" /> */}
+        {/* <span className="font-medium text-sky-800">License</span> */}
+      </div>
+      <div className="bg-gray-50  border-gray-200 rounded-lg p-4">
+        <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono overflow-x-auto">
+          {licenseContent}
+        </pre>
+      </div>
+    </div>
+  );
+}
 
 interface LicenseViewerProps {
   repoOwner: string;
@@ -464,36 +534,31 @@ export const RepositoryPage: React.FC<Props> = ({ repo, contributors}) => {
                   </div>
                 </div>
 
-              </div>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sky-700">Description</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p>{repo.description}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sky-700">README</CardTitle>
-                </CardHeader>
-                <div className="max-w-4xl w-full overflow-x-auto">
-                  <ReadmeViewer source={repo.readme} repoOwner={repo.owner || ""} repoName={repo.full_name?.split("/").pop() || ""} branch={branch} />
-                </div>
-              </Card>
-            </div>
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sky-700">Repository Info</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {repo.owner && (
+
+                <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">Development Team:</span>
+                        <a href={orgInfo?.blog || orgInfo?.html_url} target="_blank" rel="noopener noreferrer" className="text-sky-600">{repo.owner} </a>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Code className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">License:</span>
+                        <span className="text-md">{repo.license || "-"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <School className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">University:</span>
+                        <span className="text-md">{getUniversityDisplayName(repo.university) || "-"}</span>
+                      </div>
+                  
+                      {repo.language && (
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm">{repo.owner}</span>
+                      <Code className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium">Language:</span>
+                      <span className="text-md">{repo.language}</span>
                     </div>
                   )}
+
 
 
                   {repo.created_at && (

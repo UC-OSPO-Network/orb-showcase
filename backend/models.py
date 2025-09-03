@@ -1,5 +1,7 @@
 from pydantic import BaseModel
+
 from sqlmodel import SQLModel, Field, Column, ARRAY, String, JSON
+
 from typing import List
 
 class Repository(SQLModel, table=True):
@@ -57,7 +59,12 @@ class RepositoryResponse(BaseModel):
     default_branch: str | None
     topic_area_ai: str | None
     # Added missing fields
-
+    contact_name: str | None
+    contact_email: str | None
+    contact_name2: str | None
+    contact_email2: str | None
+    contact_name3: str | None
+    contact_email3: str | None
     funder1: str | None
     grant_number1_1: str | None
     grant_number1_2: str | None
