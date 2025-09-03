@@ -239,6 +239,111 @@ function LicenseViewer({ repoOwner, repoName, branch }: LicenseViewerProps) {
   );
 }
 
+interface LicenseViewerProps {
+  repoOwner: string;
+  repoName: string;
+  branch?: string;
+}
+
+function LicenseViewer({ repoOwner, repoName, branch }: LicenseViewerProps) {
+  const [licenseContent, setLicenseContent] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLicense = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // First, get the license info from GitHub API
+        const licenseUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/license`;
+        const licenseResponse = await fetch(licenseUrl);
+        
+        if (!licenseResponse.ok) {
+          throw new Error('License not found');
+        }
+        
+        const licenseData = await licenseResponse.json();
+        
+        if (!licenseData.download_url) {
+          throw new Error('License download URL not available');
+        }
+        
+        // Fetch the actual license content
+        const contentResponse = await fetch(licenseData.download_url);
+        
+        if (!contentResponse.ok) {
+          throw new Error('Failed to fetch license content');
+        }
+        
+        const content = await contentResponse.text();
+        setLicenseContent(content);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load license');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (repoOwner && repoName) {
+      fetchLicense();
+    }
+  }, [repoOwner, repoName, branch]);
+
+  if (isLoading) {
+    return (
+      <div className="p-4">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-5/6 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-gray-500">
+        <div className="flex items-center gap-2 mb-2">
+          {/* <FileText className="w-5 h-5" /> */}
+          {/* <span className="font-medium">License</span> */}
+        </div>
+        <p>Unable to load license: {error}</p>
+      </div>
+    );
+  }
+
+  if (!licenseContent) {
+    return (
+      <div className="p-4 text-gray-500">
+        <div className="flex items-center gap-2 mb-2">
+          {/* <FileText className="w-5 h-5" /> */}
+          {/* <span className="font-medium">License</span> */}
+        </div>
+        <p>No license content available.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4">
+      <div className="flex items-center gap-2 mb-4">
+        {/* <FileText className="w-5 h-5 text-sky-600" /> */}
+        {/* <span className="font-medium text-sky-800">License</span> */}
+      </div>
+      <div className="bg-gray-50  border-gray-200 rounded-lg p-4">
+        <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono overflow-x-auto">
+          {licenseContent}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+
 function useOrgInfo(org: string | undefined) {
   const [orgInfo, setOrgInfo] = useState<{ blog?: string; html_url?: string } | null>(null);
   useEffect(() => {
@@ -388,6 +493,7 @@ export const RepositoryPage: React.FC<Props> = ({ repo, contributors}) => {
                 </CardHeader>
                 <CardContent className="space-y-4">
 
+
                 <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-gray-500" />
                         <span className="font-medium">Development Team:</span>
@@ -412,6 +518,49 @@ export const RepositoryPage: React.FC<Props> = ({ repo, contributors}) => {
                     </div>
                   )}
                     
+
+                    <div className="flex gap-4 mb-4">
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <Star className="w-4 h-4" />
+                    <span>{repo.stargazers_count} stars</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <GitFork className="w-4 h-4" />
+                    <span>{repo.forks_count} forks</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <Eye className="w-4 h-4" />
+                    <span>{repo.subscribers_count} views</span>
+                  </div>
+                </div>
+
+
+                <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">Development Team:</span>
+                        <a href={orgInfo?.blog || orgInfo?.html_url} target="_blank" rel="noopener noreferrer" className="text-sky-600">{repo.owner} </a>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Code className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">License:</span>
+                        <span className="text-md">{repo.license || "-"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <School className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">University:</span>
+                        <span className="text-md">{getUniversityDisplayName(repo.university) || "-"}</span>
+                      </div>
+                  
+                      {repo.language && (
+                    <div className="flex items-center gap-2">
+                      <Code className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium">Language:</span>
+                      <span className="text-md">{repo.language}</span>
+                    </div>
+                  )}
+
+
+
                   {repo.created_at && (
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-gray-500" />

@@ -1,0 +1,19 @@
+name: Simple PR Test
+
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test PR Trigger
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Debug Event
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Event action: ${{ github.event.action }}"
+          echo "PR number: ${{ github.event.pull_request.number }}"
+          echo "This workflow is working!"

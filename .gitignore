@@ -39,3 +39,10 @@ docker-compose.override.yml
 # Misc
 *.bak
 *.tmp
+
+SETUP.md
+IMPLEMENTATION_SUMMARY.md
+TESTING.md
+test_repo_check.py
+test_workflow.py
+*.pem

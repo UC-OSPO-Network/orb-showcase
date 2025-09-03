@@ -12,7 +12,7 @@ export function RepositoryCard({ repo }: { repo: any }) {
     'Julia': 'bg-pink-100 text-pink-800',
   };
   return (
-    <Link href={`/repositories/${repo.id}`} className="group block h-full">
+    <Link href={`/repositories/${repo.full_name}`} className="group block h-full">
       <div className="relative h-full bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] cursor-pointer overflow-hidden rounded-md flex flex-col justify-between">
 
         <div className="relative z-10 p-4 md:p-6 flex flex-col h-full flex-1">

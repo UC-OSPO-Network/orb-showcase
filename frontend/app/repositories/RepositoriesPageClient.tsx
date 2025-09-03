@@ -14,7 +14,6 @@ import fuzzysort from "fuzzysort";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 type Repository = {
-  id: number;
   full_name: string;
   description?: string;
   language?: string;

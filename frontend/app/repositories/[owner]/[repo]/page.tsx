@@ -2,8 +2,8 @@
 import { useParams } from "next/navigation";
 import { useRepositoriesStore } from "@/store/repositories";
 import { useQuery } from "@tanstack/react-query";
-import { RepositoryPage } from "../../../components/RepositoryPage";
-import { RepositoryPageSkeleton } from "../../../components/RepositoryPageSkeleton";
+import { RepositoryPage } from "../../../../components/RepositoryPage";
+import { RepositoryPageSkeleton } from "../../../../components/RepositoryPageSkeleton";
 import { RepositoryErrorState } from "@/components/RepositoryErrorState/RepositoryErrorState";
 import Link from "next/link";
 import Head from "next/head";
@@ -12,7 +12,6 @@ import React, { Suspense } from "react";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 type Repository = {
-  id: number;
   full_name: string;
   description?: string;
   language?: string;
@@ -25,21 +24,29 @@ type Repository = {
   readme?: string;
   default_branch?: string;
   topic_area_ai?: string;
+  university?: string;
+  funder1?: string;
+  grant_number1_1?: string;
+  grant_number1_2?: string;
+  grant_number1_3?: string;
+  funder2?: string;
+  grant_number2_1?: string;
+  grant_number2_2?: string;
+  grant_number2_3?: string;
   // add other fields as needed
 };
 
-
-
 export default function RepositoryDetailPage() {
   const params = useParams();
-  const id = params?.id as string;
+  const owner = params?.owner as string;
+  const repo = params?.repo as string;
+  const full_name = `${owner}/${repo}`;
+  
   const repositories = useRepositoriesStore((state) => state.repositories);
-  const repo = repositories.find(r => String(r.id) === id);
+  const repository = repositories.find(r => r.full_name === full_name);
 
   // Fallback: If not found in context, fetch from API (for hard reload/bookmark)
-  // You can optionally skip this if you want purely client-side only
-  // For now, fallback to API fetch if not found
-  const shouldFetch = !repo && !!id;
+  const shouldFetch = !repository && !!owner && !!repo;
   const {
     data: fetchedRepo,
     isLoading,
@@ -47,9 +54,9 @@ export default function RepositoryDetailPage() {
     isFetched,
     isError
   } = useQuery<Repository>({
-    queryKey: ["repository", id],
+    queryKey: ["repository", owner, repo],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/repositories/${id}`);
+      const res = await fetch(`${API_URL}/repositories/${owner}/${repo}`);
       if (res.status === 404) {
         let message = "Repository not found";
         try {
@@ -66,13 +73,12 @@ export default function RepositoryDetailPage() {
     enabled: shouldFetch,
     retry: false,
     // Optimizations for instant UI:
-    initialData: () => repositories.find(r => String(r.id) === id),
-    placeholderData: () => repositories.find(r => String(r.id) === id),
+    initialData: () => repositories.find(r => r.full_name === full_name),
+    placeholderData: () => repositories.find(r => r.full_name === full_name),
     staleTime: 300_000 // 5 min
   });
-  // For even faster navigation, prefetch this query on card hover using queryClient.prefetchQuery.
 
-  const displayRepo: Repository | undefined = repo || fetchedRepo;
+  const displayRepo: Repository | undefined = repository || fetchedRepo;
 
   // Fetch contributors for the repository
   const {
@@ -83,8 +89,8 @@ export default function RepositoryDetailPage() {
     queryKey: ["repository-contributors", displayRepo?.full_name],
     queryFn: async () => {
       if (displayRepo && displayRepo.full_name && displayRepo.full_name.includes("/")) {
-        const [owner, repoName] = displayRepo.full_name.split("/");
-        const ghRes = await fetch(`https://api.github.com/repos/${owner}/${repoName}/contributors`);
+        const [repoOwner, repoName] = displayRepo.full_name.split("/");
+        const ghRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contributors`);
         if (!ghRes.ok) throw new Error("Failed to fetch contributors from GitHub");
         return ghRes.json();
       } else {
@@ -94,7 +100,6 @@ export default function RepositoryDetailPage() {
     enabled: !!displayRepo && !!displayRepo.full_name && displayRepo.full_name.includes("/"),
     staleTime: 300_000,
   });
-
 
   const is404 = (
     shouldFetch &&
@@ -150,4 +155,3 @@ export default function RepositoryDetailPage() {
     </>
   );
 }
-

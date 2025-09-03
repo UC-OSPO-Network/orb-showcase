@@ -1,5 +1,7 @@
 from pydantic import BaseModel
-from sqlmodel import SQLModel, Field, Column, ARRAY, String, JSON, Text
+
+from sqlmodel import SQLModel, Field, Column, ARRAY, String, JSON
+
 from typing import List
 
 class Repository(SQLModel, table=True):

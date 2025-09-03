@@ -1,0 +1,174 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Repository Submission Schema",
+    "description": "Schema for repository submissions to UC ORB Showcase",
+    "type": "object",
+    "required": [
+        "submission_id",
+        "submitted_at",
+        "status",
+        "repository_url",
+        "repo_full_name",
+        "submitter_name",
+        "submitter_email",
+        "short_description",
+        "topic_area_ai"
+    ],
+    "properties": {
+        "submission_id": {
+            "type": "string",
+            "description": "Unique identifier for the submission"
+        },
+        "submitted_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO timestamp of submission"
+        },
+        "status": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "approved",
+                "rejected"
+            ],
+            "description": "Current status of the submission"
+        },
+        "repository_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://github\\.com/[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+/?$",
+            "description": "GitHub repository URL"
+        },
+        "repo_full_name": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$",
+            "description": "Repository full name (owner/repo)"
+        },
+        "submitter_name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100,
+            "description": "Name of the person submitting the repository"
+        },
+        "submitter_email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the submitter"
+        },
+        "short_description": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 500,
+            "description": "Brief description of the software"
+        },
+        "topic_area_ai": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Topic area or category of the software"
+        },
+        "university": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "University affiliation (optional)"
+        },
+        "contact_name2": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "maxLength": 100,
+            "description": "Second contact name (optional)"
+        },
+        "contact_email2": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "format": "email",
+            "description": "Second contact email (optional)"
+        },
+        "contact_name3": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "maxLength": 100,
+            "description": "Third contact name (optional)"
+        },
+        "contact_email3": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "format": "email",
+            "description": "Third contact email (optional)"
+        },
+        "funder1": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "maxLength": 200,
+            "description": "Primary funder name (optional)"
+        },
+        "grant_number1_1": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "maxLength": 100,
+            "description": "First grant number for primary funder (optional)"
+        },
+        "grant_number1_2": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "maxLength": 100,
+            "description": "Second grant number for primary funder (optional)"
+        },
+        "grant_number1_3": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "maxLength": 100,
+            "description": "Third grant number for primary funder (optional)"
+        },
+        "funder2": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "maxLength": 200,
+            "description": "Secondary funder name (optional)"
+        },
+        "grant_number2_1": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "maxLength": 100,
+            "description": "First grant number for secondary funder (optional)"
+        },
+        "grant_number2_2": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "maxLength": 100,
+            "description": "Second grant number for secondary funder (optional)"
+        },
+        "grant_number2_3": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "maxLength": 100,
+            "description": "Third grant number for secondary funder (optional)"
+        }
+    },
+    "additionalProperties": false
+}
