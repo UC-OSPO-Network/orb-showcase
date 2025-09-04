@@ -25,39 +25,14 @@ git clone https://github.com/UC-OSPO-Network/orb-showcase
        NEXT_PUBLIC_API_URL=http://localhost:8000
        ```
     
-2. **Database Setup**
 
-   Create `local-dev-network` if it doesn't exist:
-
-   ```bash
-   docker network create local-dev-net
-   ```
-
-   Start the database container:
-   
-   ```bash
-   docker run -d \
-     --name orb-db \
-     --network local-dev-net \
-     -e POSTGRES_USER=postgres \
-     -e POSTGRES_PASSWORD=orb \
-     -e POSTGRES_DB=sample \
-     -p 5432:5432 \
-     postgres:15
-   ```
-
-   Load schema and dummy data:
-   ```bash
-   cat db/sample.sql | docker exec -i orb-db psql -U postgres -d sample
-   ```
-
-3. **Start All Services**
+2. **Start All Services**
 
    From the project root, run:
    ```bash
    docker-compose up --build 
    ```
-   This will start the backend, frontend, and connect to your running Postgres database (all on the `local-dev-net` Docker network).
+   This will start the backend, frontend, and connect to your running Postgres Database (in `.env`)
 
    **Tip:** For subsequent runs (when no code or dependency changes are made), you can use:
    ```bash
@@ -65,7 +40,7 @@ git clone https://github.com/UC-OSPO-Network/orb-showcase
    ```
    for faster startup.
 
-4. **Accessing the App**
+3. **Accessing the App**
    - **Frontend:** http://localhost:3000
    - **Backend API:** http://localhost:8000
 
@@ -73,8 +48,7 @@ git clone https://github.com/UC-OSPO-Network/orb-showcase
 
 ## Notes
 - Both backend and frontend require their own `.env` files for configuration. These are mounted into the containers automatically by Docker Compose.
-- The backend must use `orb-db` as the database host when running in Docker Compose (not `localhost`).
-- For local (non-Docker) development, you may use `localhost` as the database host.
+
 
 ---
 

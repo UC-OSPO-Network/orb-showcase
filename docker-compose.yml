@@ -10,6 +10,7 @@ services:
       - ./backend/.env:/app/.env
     networks:
       - local-dev-net
+
   frontend:
     build:
       context: ./frontend
@@ -17,8 +18,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - /app/node_modules
       - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
       - ./frontend/.env:/app/.env
     networks:
       - local-dev-net
@@ -26,4 +27,6 @@ services:
 networks:
   local-dev-net:
     external: true
-  
+
+volumes:
+  frontend_node_modules:
