@@ -9,6 +9,7 @@ IMAGE="us-west1-docker.pkg.dev/digital-ucdavis-edu/pub/ospo-orb-backend:$VERSION
 
 # Deploy to Cloud Run
 gcloud run deploy orb-showcase-backend \
+  --project digital-ucdavis-edu \
   --image $IMAGE \
   --region us-west1 \
   --platform managed \
