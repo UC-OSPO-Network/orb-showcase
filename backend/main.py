@@ -5,6 +5,7 @@ from sqlmodel import Session, select, func
 from models import Repository, RepositoryResponse
 from fastapi import HTTPException
 from database import get_session
+import asyncio
 import httpx
  
 app = FastAPI()
@@ -203,3 +204,8 @@ def get_organizations(session: Session = Depends(get_session)):
     )
     return sorted([owner for owner in result if owner])
 
+# This ensures the rotation timer starts when the web server starts
+@app.on_event("startup")
+async def startup_event():
+    from database import rotate_key
+    asyncio.create_task(rotate_key())
