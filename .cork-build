@@ -6,6 +6,9 @@
   "images" : {
     "ospo-orb-backend" : {
       "contextPath" : "backend"
+    },
+     "ospo-orb-frontend" : {
+      "contextPath" : "frontend"
     }
   }
 }
