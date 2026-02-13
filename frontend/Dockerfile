@@ -6,7 +6,9 @@ RUN npm install -g pnpm
 
 COPY package.json pnpm-lock.yaml ./
 COPY . .
+RUN pnpm install 
+RUN pnpm build
 
 EXPOSE 3000
 
-CMD pnpm install && pnpm dev --turbo
+CMD pnpm dev --turbo

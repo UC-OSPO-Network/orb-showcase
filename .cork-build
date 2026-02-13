@@ -1,0 +1,14 @@
+{
+  "registry" : "us-west1-docker.pkg.dev/digital-ucdavis-edu/pub",
+
+  "repositories" : {},
+
+  "images" : {
+    "ospo-orb-backend" : {
+      "contextPath" : "backend"
+    },
+     "ospo-orb-frontend" : {
+      "contextPath" : "frontend"
+    }
+  }
+}
