@@ -11,8 +11,6 @@ import { RepositoryErrorState } from "@/components/RepositoryErrorState/Reposito
 import { RepositoryLoadingGrid } from "@/components/RepositoryLoadingGrid/RepositoryLoadingGrid";
 import fuzzysort from "fuzzysort";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 type Repository = {
   full_name: string;
   description?: string;
@@ -38,7 +36,11 @@ type Repository = {
   // add other fields as needed
 };
 
-export function RepositoriesPageClient() {
+type RepositoriesPageClientProps = {
+  apiUrl: string;
+};
+
+export function RepositoriesPageClient({ apiUrl }: RepositoriesPageClientProps) {
   const repositories: Repository[] = useRepositoriesStore((state) => state.repositories);
   const setRepositories = useRepositoriesStore((state) => state.setRepositories);
   // Use zustand for filters
@@ -59,23 +61,23 @@ export function RepositoriesPageClient() {
   // Fetch filter options
   const { data: universities = [] } = useQuery({
     queryKey: ["universities"],
-    queryFn: () => fetch(`${API_URL}/universities`).then(res => res.json()),
+    queryFn: () => fetch(`${apiUrl}/universities`).then(res => res.json()),
   });
   const { data: languages = [] } = useQuery({
     queryKey: ["languages"],
-    queryFn: () => fetch(`${API_URL}/languages`).then(res => res.json()),
+    queryFn: () => fetch(`${apiUrl}/languages`).then(res => res.json()),
   });
   const { data: licenses = [] } = useQuery({
     queryKey: ["licenses"],
-    queryFn: () => fetch(`${API_URL}/licenses`).then(res => res.json()),
+    queryFn: () => fetch(`${apiUrl}/licenses`).then(res => res.json()),
   });
   const { data: organizations = [] } = useQuery({
     queryKey: ["organizations"],
-    queryFn: () => fetch(`${API_URL}/organizations`).then(res => res.json()),
+    queryFn: () => fetch(`${apiUrl}/organizations`).then(res => res.json()),
   });
   const { data: topics = [] } = useQuery({
     queryKey: ["topics"],
-    queryFn: () => fetch(`${API_URL}/topics`).then(res => res.json()),
+    queryFn: () => fetch(`${apiUrl}/topics`).then(res => res.json()),
   });
   
 
@@ -89,7 +91,7 @@ export function RepositoriesPageClient() {
       setIsLoading(true);
       setIsError(false);
       try {
-        const res = await fetch(`${API_URL}/repositories`);
+        const res = await fetch(`${apiUrl}/repositories`);
         const data = await res.json();
         if (!ignore) setRepositories(data);
       } catch (e) {
