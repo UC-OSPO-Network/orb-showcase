@@ -36,7 +36,7 @@ export default function Navbar() {
       <div className="w-full flex h-16 items-center justify-between px-4 relative">
         <Link href="/" className="flex items-center gap-2">
           <img src="/images/uc-ospo-logo.svg" alt="UC OSPO Network" className="h-8 w-auto" />
-          <span className="text-xl font-bold text-sky-700">UC ORB</span>
+          <span className="text-xl font-bold text-sky-700">UC Open Source Showcase</span>
         </Link>
         {/* Desktop nav */}
         <nav className="hidden md:flex gap-6">

@@ -6,11 +6,11 @@ export default function AboutPage() {
       
       <main className="flex-1 py-10">
         <div className="container">
-          <h1 className="text-3xl font-bold mb-8 text-sky-800">About Open Source Hub</h1>
+          <h1 className="text-3xl font-bold mb-8 text-sky-800">About UC Open Source Showcase</h1>
 
           <div className="prose max-w-none">
             <p className="text-lg">
-              Open Source Hub is a discovery tool designed to map and classify open source projects from developers and
+              UC Open Source Showcase is a discovery tool designed to map and classify open source projects from developers and
               organizations around the world.
             </p>
 
@@ -23,7 +23,7 @@ export default function AboutPage() {
 
             <h2 className="text-2xl font-bold mt-8 mb-4 text-sky-700">How It Works</h2>
             <p>
-              Open Source Hub aggregates data from multiple sources, including GitHub, GitLab, and other code hosting
+              UC Open Source Showcase aggregates data from multiple sources, including GitHub, GitLab, and other code hosting
               platforms. We use advanced algorithms to categorize and tag repositories, making it easier for you to find
               projects that match your interests.
             </p>
@@ -35,7 +35,7 @@ export default function AboutPage() {
 
             <h2 className="text-2xl font-bold mt-8 mb-4 text-sky-700">Get Involved</h2>
             <p>
-              Open Source Hub is itself an open source project! We welcome contributions from developers, designers, and
+              UC Open Source Showcase is itself an open source project! We welcome contributions from developers, designers, and
               anyone else who wants to help improve the platform. Check out our GitHub repository to learn more about
               how you can get involved.
             </p>

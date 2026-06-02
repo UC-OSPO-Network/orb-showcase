@@ -32,7 +32,7 @@ export default function Home() {
       <main className="flex-1">
         <section className="bg-sky-700 text-white py-20">
           <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-20 text-center space-y-6">
-            <h1 className="text-4xl font-bold sm:text-5xl md:text-6xl">UC Open Repository Browser</h1>
+            <h1 className="text-4xl font-bold sm:text-5xl md:text-6xl">UC Open Source Showcase</h1>
             <p className="max-w-3xl mx-auto text-lg text-sky-100">
               Showcasing world-class open source scientific software from the University of California.
             </p>
