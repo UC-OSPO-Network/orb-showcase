@@ -180,7 +180,7 @@ export const validateField = (field: keyof RepositorySubmissionData, value: any)
         return { success: true, error: null };
     } catch (error) {
         if (error instanceof z.ZodError) {
-            return { success: false, error: error.errors[0]?.message || "Invalid value" };
+            return { success: false, error: error.issues[0]?.message || "Invalid value" };
         }
         return { success: false, error: "Validation error" };
     }
@@ -188,7 +188,7 @@ export const validateField = (field: keyof RepositorySubmissionData, value: any)
 
 // Helper function to get field error message
 export const getFieldError = (errors: z.ZodError, fieldName: string): string | undefined => {
-    const fieldError = errors.errors.find(error =>
+    const fieldError = errors.issues.find(error =>
         error.path.length > 0 && error.path[0] === fieldName
     );
     return fieldError?.message;
