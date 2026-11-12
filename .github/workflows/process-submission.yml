@@ -80,7 +80,7 @@ jobs:
 
       - name: Comment validation results
         if: steps.changed-files.outputs.files != ''
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -107,7 +107,7 @@ jobs:
 
       - name: Comment no submission files
         if: steps.changed-files.outputs.files == ''
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const comment = '## 🤖 No Repository Submissions Found\n\n' +
