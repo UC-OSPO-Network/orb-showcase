@@ -1,0 +1,5 @@
+# Keep local build output, installed packages, and secrets out of the image.
+# The image runs its own pnpm install and build.
+node_modules
+.next
+.env*

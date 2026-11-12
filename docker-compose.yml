@@ -15,6 +15,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    command: pnpm dev --turbo
     ports:
       - "3000:3000"
     volumes:

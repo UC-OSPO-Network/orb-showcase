@@ -1,0 +1,3 @@
+allowBuilds:
+  # Only used by the ESLint import plugin; its prebuilt binding comes as an optional dependency.
+  unrs-resolver: false

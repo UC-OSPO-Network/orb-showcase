@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "monthly"
+    groups:
+      frontend-minor-and-patch:
+        update-types: ["minor", "patch"]
+    # Major upgrades (Next, zod, and so on) are deliberate PRs, not monthly ones
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "docker"
+    directories:
+      - "/frontend"
+      - "/backend"
+    schedule:
+      interval: "monthly"
+    # Keeps Node on its LTS line (no jump to odd-numbered, short-lived releases)
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
